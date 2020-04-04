@@ -1,21 +1,48 @@
 <?php 
 
-$dsn="mysql:dbname=dbcourse";
-$user="root";
-$pwd="";  
-$arrayResult=[];
-try{
-    $dbh=new PDO($dsn,$user,$pwd);
+class ConnexionClasse {
+
+    /* static attributes for ConnexionClasse*/
+    /*private static $db;
+    private static $hostname;
+    private static $user;
+    private static $pwd;*/
+    private static $dsn;
+    public static $dbh;
+
+    /* method to create pdo instance */
+    public static function CreerPDO(string $db,string $hostname,string $user, string $pwd): ?PDO{
+        self::$dsn="mysql:dbname=$db;host=$hostname";
+        try{
+            self::$dbh = new PDO(self::$dsn,$user,$pwd);
+            return self::$dbh;
+        } 
+        catch(PDOException $err){
+            echo "Error : " . $err->getMessage();
+
+        }
+        
+
+    }
+    
+    
 }
-catch(PDOException $e){
-    echo "Erreur : " . $e->getMessage();
-} 
+
+$db="dbcourse";
+$hostname="127.0.0.1";
+$usr="root";
+$pass="";
+
+$obj=ConnexionClasse::CreerPDO($db,$hostname,$usr,$pass);
+
+
+
 
 $request="SELECT * FROM t_produit";
 
-$statement=$dbh->prepare($request);
-$statement->execute(); //NB execute return a boolean
-$arrayResult=$statement->fetchAll(PDO::FETCH_ASSOC); //fetchassoc create associative array
+$statement=$obj->prepare($request);
+$statement->execute(); 
+$arrayResult=$statement->fetchAll(PDO::FETCH_ASSOC); 
 print_r($arrayResult);
 ?>
 
