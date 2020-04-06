@@ -72,6 +72,71 @@ class RequeteClasse{
 
     }
 
+    /**
+     * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
+     * @param String $request: la requête qu'on veut executé.
+     * @return Array $ReadableArrayData le tableau contenant les données sous forme tableau-associatif
+    */
+    public static function ReqRead(PDO $pdoObject,string $request) : array {
+
+        $statement=$pdoObject->prepare($request); 
+        $statement->execute();
+        $ReadableArrayData=$statement->fetchAll(PDO::FETCH_ASSOC);
+        return $ReadableArrayData;
+
+    } 
+
+    /**
+     * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
+     * @param Array $ParamDelArray: tableau contenant le nécessaire pour faire la requête 
+     * le tableau doit prendre la forme suivante : (1ère clé pour la table, seconde pour le nom du champ de la clé primaire et la troisième clé
+     * est associé à un tableau de l'ensemble des choses à supprimer (si le tableau est vide ça pruge la table : DELETE FROM TABLE) : 
+     * [
+     * 'table'=>'nomtable',
+     * 'primaryKName'=>'nomPk',
+     * 'identifiants'=>[X,X,X]
+     * ]
+     * @return Bool true = suppresion réussie, false : suppresion échouée
+     */
+    public static function ReqDelete(PDO $pdoObject,Array $ParamDelArray):bool{
+        $firstPartRequest="";
+        $secondPartRequest="";
+        $finalDeleteRequest=""; 
+
+        $nomTable="`".$ParamDelArray['table']."`";//utliser les `` syntaxe SQL
+        $primaryKeyName="`".$ParamDelArray['primaryKName']."`"; //utliser les `` syntaxe SQL
+
+
+        $firstPartRequest="DELETE FROM $nomTable";
+        //recup tableau sans la table et la pk, que la clé et le sous tableau des id à suppr
+        $intermediateArrayForDelRequest=array_slice($ParamDelArray,2); 
+        foreach($intermediateArrayForDelRequest as $listOfDeletableItem){
+            $lastItem=end($listOfDeletableItem); //recupére le dernier element du tableau pour écrire correctement l'ordre sql
+            //la liste des choses à supprimer est vide à 0  ->purge de la table
+            if(count($listOfDeletableItem)===0){ 
+                $secondPartRequest="";
+
+            }
+            else{
+                $firstPartRequest .=" WHERE ";
+                foreach($listOfDeletableItem as $key=>$value){
+                    if($value===$lastItem){ //fin de la requête
+                        $secondPartRequest.=" $primaryKeyName='$value' ";
+                    }
+                    else{
+                        $secondPartRequest.=" $primaryKeyName = '$value' OR ";  
+                    }
+                                 
+                }
+            }
+           
+        }
+        $finalDeleteRequest=$firstPartRequest.$secondPartRequest;
+        $statementDelete=$pdoObject->prepare($finalDeleteRequest);
+        return $statementDelete->execute();
+
+    }
+
 }
 
 /* FIN DE LA DEUXIEME CLASSE */
@@ -83,20 +148,33 @@ $pass="";
 
 $obj=ConnexionClasse::CreerPDO($db,$hostname,$usr,$pass);
 
+/* TEST SUR LA SELECTION */
+$request="SELECT nomproduit,qtepdt FROM t_produit";
+$arrayResult=RequeteClasse::ReqRead($obj,$request);  
+
+/* TEST SUR LA SUPRESSION  
+$tableauSuppr=[
+    'table'=>'t_produit',
+    'primaryKName'=>'id',
+    'identifiants'=>[1,5]
+
+];
+$var=RequeteClasse::ReqDelete($obj,$tableauSuppr);
+var_dump($var);*/
+
+
+
+/*TEST SUR L INSERTION
 $tableauReqInsert=[
     "table"=>'t_produit',
     "nomproduit"=>"poisson",
     "qtepdt"=>"3",
 ];
-
 $insertion=RequeteClasse::ReqAdd($obj,$tableauReqInsert);
-var_dump($insertion);
+var_dump($insertion);*/
 
 
-$request="SELECT * FROM t_produit";
-$statement=$obj->prepare($request);
-$statement->execute(); 
-$arrayResult=$statement->fetchAll(PDO::FETCH_ASSOC);  
+
 //print_r($arrayResult);
 ?>
 
