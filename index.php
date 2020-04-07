@@ -137,6 +137,75 @@ class RequeteClasse{
 
     }
 
+ 
+/**
+     * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
+     * @param Array $BaseReqUpd: tableau contenant le nécessaire pour faire la requête 
+     * le tableau doit prendre la forme suivante : (1ère clé pour la table, seconde pour le nom du champ de la clé primaire et la troisième clé
+     * est associé à un tableau de l'ensemble des choses à modifier : 
+     * [
+     * 'table'=>'nomtable',
+     * 'primaryKName'=>'nomPk',
+     * 'identifiants'=>[X,X,X]
+     * ] 
+     * @param Array $FieldValueUpd : tableau contenant une clé unique qui a pour valeur associée un tableau pair clé-valeur qui sert à modifier les enregistrements : 
+     * [
+     * 'indices'=>[
+     *'champ1'=>'nouvellevaleur1',
+     *'champ2'=>'nouvellevaleur2'
+     * ]
+     * @return Bool true = modification réussie, false : modification échouée
+     */
+    public static function ReqUpdate(PDO $pdoObject, Array $BaseReqUpd, Array $FieldValueUpd):bool{
+        $finalUpdateRequest=""; //toute la requête
+        $firstPartRequest=""; // UPDATE TABLE
+        $secondPartRequest=""; //`CHAMP` = 'VALUE'
+        $thirdPartRequest=""; // `PK`=VALUE PAS OUBLIER D AJOUTER WHERE A LA FIN
+        
+        $nomTable="`".$BaseReqUpd['table']."`"; // utile à syntaxe sql
+        $primaryKeyName="`".$BaseReqUpd['primaryKName']."`";// utile syntaxe sql
+
+        $firstPartRequest=" UPDATE $nomTable";
+        //recup tableau sans la table et la pk, que la clé et le sous tableau des id à update
+        $intermediateArrayForUpdRequest=array_slice($BaseReqUpd,2); 
+        //construction de la dernière partie de la requête après le WHERE : `ccléprimairehamp`='value' OR `cléprimaire`='value2'
+        foreach($intermediateArrayForUpdRequest as $listOfUpdtableItem){
+            $lastItem=end($listOfUpdtableItem);
+            foreach($listOfUpdtableItem as $key=>$value){
+                if($value===$lastItem){
+                    $thirdPartRequest.=" $primaryKeyName = '$value' ";
+                }
+                else{
+                    $thirdPartRequest.=" $primaryKeyName = '$value' OR ";
+                }
+
+            }
+        } 
+
+        $intermediateArrayForField=array_slice($FieldValueUpd,0); //récupération du tableau sous forme ['champ'=>['clé1'=>'value1','clé2'=>'value2']]
+        foreach($intermediateArrayForField as $listOfSetField){
+            $lastItemField=end($listOfSetField); 
+            //construction de la seconde partie de la requête après le SET `nomchamp`='nouvellevaleur',`nomchamp2`='nouvellevaleur2' 
+            foreach($listOfSetField as $keyField=>$valueField){ 
+                if($valueField===$lastItemField) {
+                    $secondPartRequest.="  `$keyField` = '$valueField' ";
+                }
+                    
+                else {
+                    $secondPartRequest.="  `$keyField` = '$valueField' ,";
+                }
+
+            }
+        }
+
+
+        $finalUpdateRequest=$firstPartRequest." SET ".$secondPartRequest."WHERE ".$thirdPartRequest;
+        $statementUpdate=$pdoObject->prepare($finalUpdateRequest);
+        return $finalUpdateRequest;
+        
+    }
+
+//FIN DE LA CLASSE
 }
 
 /* FIN DE LA DEUXIEME CLASSE */
@@ -147,6 +216,24 @@ $usr="root";
 $pass="";
 
 $obj=ConnexionClasse::CreerPDO($db,$hostname,$usr,$pass);
+
+/* TEST SUR UPDATE */
+
+$tableauUpdtBase=[
+    'table'=>'t_produit',
+    'primaryKName'=>'id',
+    'identifiants'=>[2,4]
+
+]; 
+
+$tableauUpdtSuite=[
+    'indices'=>[
+        'nomproduit'=>'nouvellevaleur',
+        'qtepdt'=>'8'
+    ]
+];
+$var=RequeteClasse::ReqUpdate($obj,$tableauUpdtBase,$tableauUpdtSuite);
+var_dump($var);
 
 /* TEST SUR LA SELECTION */
 $request="SELECT nomproduit,qtepdt FROM t_produit";
