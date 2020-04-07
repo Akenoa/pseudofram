@@ -201,7 +201,7 @@ class RequeteClasse{
 
         $finalUpdateRequest=$firstPartRequest." SET ".$secondPartRequest."WHERE ".$thirdPartRequest;
         $statementUpdate=$pdoObject->prepare($finalUpdateRequest);
-        return $finalUpdateRequest;
+        return $statementUpdate->execute();
         
     }
 
