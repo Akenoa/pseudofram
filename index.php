@@ -1,5 +1,13 @@
 <?php 
 
+class Config{ 
+
+    public const DB='dbcourse';
+    public const HOSTNAME='127.0.0.1';
+    public const USR='root';
+    public const PWD='';
+
+}
 class ConnexionClasse {
 
     /* attributs static de la classe ConnexionClasse */
@@ -11,10 +19,10 @@ class ConnexionClasse {
     public static $dbh;
 
     /*  méthode static pour créer une instance pdo */
-    public static function CreerPDO(string $db,string $hostname,string $user, string $pwd): ?PDO{
-        self::$dsn="mysql:dbname=$db;host=$hostname";
+    public static function CreerPDO(): ?PDO{
+        self::$dsn="mysql:dbname=".Config::DB.";host=".Config::HOSTNAME;
         try{
-            self::$dbh = new PDO(self::$dsn,$user,$pwd);
+            self::$dbh = new PDO(self::$dsn,Config::USR,Config::PWD);
             return self::$dbh;
         } 
         catch(PDOException $err){
@@ -28,7 +36,7 @@ class ConnexionClasse {
     }
     
 } 
-/* FIN DE LA PREMIERE CLASSE */ 
+/* FIN DE LA PREMIERE CLASSE CREATION D UNE INSTANCE DE CONNEXION */ 
 
 class RequeteClasse{ 
 
@@ -208,16 +216,11 @@ class RequeteClasse{
 //FIN DE LA CLASSE
 }
 
-/* FIN DE LA DEUXIEME CLASSE */
+/* FIN DE LA DEUXIEME CLASSE SUR REQUETAGE MODELE */
 
-$db="dbcourse";
-$hostname="127.0.0.1";
-$usr="root";
-$pass="";
 
-$obj=ConnexionClasse::CreerPDO($db,$hostname,$usr,$pass);
 
-/* TEST SUR UPDATE */
+/* TEST SUR UPDATE 
 
 $tableauUpdtBase=[
     'table'=>'t_produit',
@@ -233,12 +236,7 @@ $tableauUpdtSuite=[
     ]
 ];
 $var=RequeteClasse::ReqUpdate($obj,$tableauUpdtBase,$tableauUpdtSuite);
-var_dump($var);
-
-/* TEST SUR LA SELECTION */
-$request="SELECT nomproduit,qtepdt FROM t_produit";
-$arrayResult=RequeteClasse::ReqRead($obj,$request);  
-
+var_dump($var);*/
 /* TEST SUR LA SUPRESSION  
 $tableauSuppr=[
     'table'=>'t_produit',
@@ -263,6 +261,25 @@ var_dump($insertion);*/
 
 
 //print_r($arrayResult);
+
+/* TEST SUR LA SELECTION */
+
+
+class PseudoController{ 
+
+    public static function indexController(){
+        $obj=ConnexionClasse::CreerPDO();
+        $request="SELECT nomproduit,qtepdt FROM t_produit";
+        $arrayResult=RequeteClasse::ReqRead($obj,$request);
+        return $arrayResult;
+    }
+    
+
+
+
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -270,8 +287,9 @@ var_dump($insertion);*/
 <body>
 
 <h1>Liste des courses</h1>
-<?php
-    foreach($arrayResult as $key=>$value){
+<?php 
+$var=PseudoController::indexController();
+    foreach($var as $key=>$value){
         echo "Id : $key  / nom complet :  {$value['nomproduit']} / quantité : {$value['qtepdt']} <br />";  
     }
 ?>
