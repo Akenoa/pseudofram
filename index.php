@@ -2,19 +2,17 @@
 
 class Config{ 
 
-    public const DB='dbcourse';
-    public const HOSTNAME='127.0.0.1';
-    public const USR='root';
-    public const PWD='';
+    //sous forme de tableau?
+    const DB='dbcourse';
+    const HOSTNAME='127.0.0.1';
+    const USR='root';
+    const PWD='';
 
 }
+/* FIN DE LA CLASSE FICHIER CNX */
 class ConnexionClasse {
 
     /* attributs static de la classe ConnexionClasse */
-    /*private static $db;
-    private static $hostname;
-    private static $user;
-    private static $pwd;*/
     private static $dsn;
     public static $dbh;
 
@@ -41,89 +39,123 @@ class ConnexionClasse {
 class RequeteClasse{ 
 
     /**
-     * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
-     * @param Array $ParamArray: tableau contenant le nécessaire pour faire la requête 
-     * le tableau doit prendre la forme suivante : (1ère clé pour la table les autres fonctionnent par 
-     * paire clé-valeur pour champs et les valeurs à insérer)
-     * ['table'=>'nomtable', 'champ1'=>'value1','champ2'=>'valeur2'] 
-     * @return Bool true = insertion réussie, false : insertion échouée
+     * @return PDO object pour se connecter.
      */
-    public static function ReqAdd(PDO $pdoObject, Array $ParamArray): bool{      
-        $stmt=null; //variable qui servira a être type PDOStatement pour pouvoir execute requête dessus.
-        $firstPartRequest=""; //partie contenant l'ordre INSERT INTO avec la table et les champs
-        $secondPartRequest=""; //partie contenant la suite de l'ordre VALUE avec les valeurs à associé au champs
-        $finalInsertRequest="";  //requête finale concaténation des 2 parties de la requête
+    public static function faisConnexion():?PDO{
+        return ConnexionClasse::CreerPDO();
+    }
 
+    /*
+    * @param Arram $arrayOfLastItemDesired 
+    * @return the last item of array.
+    
+    public static function donneDernierItem(Array $arrayOfLastItemDesired){
+        $lastItemArray = end($arrayOfLastItemDesired);
+        return $lastItemArray;
 
-        $nomTable = "`".$ParamArray['table']."`"; //mettre le nom de la table entre `` syntaxe SQL
-        $firstPartRequest="INSERT INTO $nomTable ( ";
-        $arrayFieldValue=array_splice($ParamArray,1); //retirer l'élement table du tableau pour n'avoir que les champs-valeurs
-        $lastElementFieldValue=end($arrayFieldValue); //dernier élement du nouveau tableau
-        $secondPartRequest=" VALUES (";
-        foreach ($arrayFieldValue as $key => $value) {
-            //NB: champs de la requête doivent être entre `` et les valeurs entre '' syntaxe SQL
-            if($value===$lastElementFieldValue){ 
-                //si on est à la fin du tableau on stop la chaine requete SQL
-                $firstPartRequest.="`$key`)";
-                $secondPartRequest.="'$value')";
-            } 
-            else {
-                $firstPartRequest.= " `$key`,";
-                $secondPartRequest.= "'$value',";
-            }
-            
-            
-        } 
-        $finalInsertRequest=$firstPartRequest.$secondPartRequest;
-        $stmt=$pdoObject->prepare($finalInsertRequest);
-        return $stmt->execute(); 
+    }
+    */
+
+    /*
+    * @param String $request la requete qu'on veut préparer puis executer
+    * @return Bool résultat si la requête réussi true sinon false
+    */ 
+    public static function prepareThenExecute(string $request):?bool{
+        $objPdo=RequeteClasse::faisConnexion();
+        $requestStatement=$objPdo->prepare($request);
+        return $requestStatement->execute();
 
     }
 
-    /**
-     * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
-     * @param String $request: la requête qu'on veut executé.
-     * @return Array $ReadableArrayData le tableau contenant les données sous forme tableau-associatif
+    /*
+    * @param String $request la requete qu'on veut préparer puis executer
+    * @return Array tableau assoaciatif des résultat à lire
+    */ 
+    public static function prepareThenExecuteReadDataAssoc(string $request):?Array{
+        $objPdo=RequeteClasse::faisConnexion();
+        $requestStatement=$objPdo->prepare($request);
+        $requestStatement->execute();
+        $arrayOfDataResult=$requestStatement->fetchAll(PDO::FETCH_ASSOC);
+
+    }
+     /*
+    * @param String $request la requete qu'on veut préparer puis executer
+    * @return Array tableau indexé en partant de 0
+    */ 
+    public static function prepareThenExecuteReadDataNum(string $request):?Array{
+        $objPdo=RequeteClasse::faisConnexion();
+        $requestStatement=$objPdo->prepare($request);
+        $requestStatement->execute();
+        $arrayOfDataResult=$requestStatement->fetchAll(PDO::FETCH_NUM);
+
+    }
+
+/*****************************REQUETE CRUD*************************************** */ 
+/*****************************REQUETE CRUD*************************************** */ 
+/*****************************REQUETE CRUD*************************************** */ 
+/*****************************REQUETE CRUD*************************************** */ 
+
+    /*
+    * @param Array $ParamReqAdd : tableau qui contient le nécessaire pour écrire toute la requête
+    * le tableau doit prendre la forme suivante : (1ère clé pour la table les autres fonctionnent par 
+    * paire clé-valeur pour champs et les valeurs à insérer)
+    * ['table'=>'nomtable', 
+    * 'indice'=>['champ1'=>'value1',"champ2"=>'$value2]
     */
-    public static function ReqRead(PDO $pdoObject,string $request) : array {
-
-        $statement=$pdoObject->prepare($request); 
-        $statement->execute();
-        $ReadableArrayData=$statement->fetchAll(PDO::FETCH_ASSOC);
-        return $ReadableArrayData;
-
-    } 
-
-    /**
-     * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
-     * @param Array $ParamDelArray: tableau contenant le nécessaire pour faire la requête 
-     * le tableau doit prendre la forme suivante : (1ère clé pour la table, seconde pour le nom du champ de la clé primaire et la troisième clé
-     * est associé à un tableau de l'ensemble des choses à supprimer (si le tableau est vide ça pruge la table : DELETE FROM TABLE) : 
-     * [
-     * 'table'=>'nomtable',
-     * 'primaryKName'=>'nomPk',
-     * 'identifiants'=>[X,X,X]
-     * ]
-     * @return Bool true = suppresion réussie, false : suppresion échouée
-     */
-    public static function ReqDelete(PDO $pdoObject,Array $ParamDelArray):bool{
+    public static function prepareInsert(Array $ParamReqAdd): ?String{
         $firstPartRequest="";
         $secondPartRequest="";
-        $finalDeleteRequest=""; 
+        $finalRequest="";//la requête à retourner à la fin
 
-        $nomTable="`".$ParamDelArray['table']."`";//utliser les `` syntaxe SQL
-        $primaryKeyName="`".$ParamDelArray['primaryKName']."`"; //utliser les `` syntaxe SQL
+        $nomtable="`".$ParamReqAdd['table']."`";
+        $firstPartRequest="INSERT INTO $nomtable ( ";
+        $secondPartRequest=" VALUES (";
 
+        $arrayKeyIndice=array_splice($ParamReqAdd,1); // ['indice'=>['champ'=>'valeur]]
+        foreach($arrayKeyIndice as $listOfInsertField){
+            $lastElement=end($listOfInsertField); //récupérer le dernier élément pour pouvoir clore la requête
+            foreach($listOfInsertField as $key=>$value){
+                if($value===$lastElement){
+                    $firstPartRequest.="`$key`)";
+                    $secondPartRequest.="'$value')";
 
-        $firstPartRequest="DELETE FROM $nomTable";
-        //recup tableau sans la table et la pk, que la clé et le sous tableau des id à suppr
-        $intermediateArrayForDelRequest=array_slice($ParamDelArray,2); 
+                }
+                else{ 
+                    $firstPartRequest.="`$key`,";
+                    $secondPartRequest.="'$value',";
+                }
+
+            }
+
+        } 
+        $finalRequest=$firstPartRequest.$secondPartRequest;
+        return $finalRequest;
+    }
+
+    /*
+    * @param Array $ParamReqAdd : tableau qui contient le nécessaire pour écrire toute la requête
+    * le tableau doit prendre la forme suivante : (1ère clé pour la table les autres fonctionnent par 
+    * paire clé-valeur pour champs et les valeurs à insérer)
+    * ['table'=>'nomtable', 
+    * 'primaryKName'=>'nompk',
+    * 'indice'=>['champ1'=>'value1',"champ2"=>'$value2]
+    */
+    public static function prepareDelete(Array $ParamReqDel):?string{
+        $firstPartRequest="";
+        $secondPartRequest="";
+        $finalRequest="";//ce qu'on va retourner à la fin 
+    
+        $nomtable="`".$ParamReqDel['table']."`";
+        $primaryKeyName="`".$ParamReqDel['primaryKName']."`";
+        $firstPartRequest="DELETE FROM $nomtable  ";
+    
+        $intermediateArrayForDelRequest=array_slice($ParamReqDel,2); // ['indice'=>['champ'=>'valeur]]
         foreach($intermediateArrayForDelRequest as $listOfDeletableItem){
             $lastItem=end($listOfDeletableItem); //recupére le dernier element du tableau pour écrire correctement l'ordre sql
             //la liste des choses à supprimer est vide à 0  ->purge de la table
             if(count($listOfDeletableItem)===0){ 
                 $secondPartRequest="";
-
+    
             }
             else{
                 $firstPartRequest .=" WHERE ";
@@ -140,15 +172,70 @@ class RequeteClasse{
            
         }
         $finalDeleteRequest=$firstPartRequest.$secondPartRequest;
-        $statementDelete=$pdoObject->prepare($finalDeleteRequest);
-        return $statementDelete->execute();
-
+        return $finalDeleteRequest;
     }
 
- 
-/**
+    /**
      * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
-     * @param Array $BaseReqUpd: tableau contenant le nécessaire pour faire la requête 
+     * @param Array $ParamArray: tableau contenant le nécessaire pour faire la requête 
+     * le tableau doit prendre la forme suivante : (1ère clé pour la table les autres fonctionnent par 
+     * paire clé-valeur pour champs et les valeurs à insérer)
+     * ['table'=>'nomtable', 
+     * 'champ1'=>'value1',
+     * 'champ2'=>'valeur2'] 
+     * @return Bool true = insertion réussie, false : insertion échouée
+     */
+    public static function ReqAdd(Array $ParamReqAdd): bool{      
+       $request=RequeteClasse::prepareInsert($ParamReqAdd);
+       $requestResult=RequeteClasse::prepareThenExecute($request);
+        return $requestResult;
+
+    } 
+
+
+    /*
+    09/04/2020 EN PAUSE
+    public static function  ReqReadV2(PDO $pdoObject,Array $ParamReadArray){
+        $nomTable="`".$ParamArray['table']."`"; //SELECT FROM TABLE;
+        $firstPartRequest=""; // CHAMPS,CHAMPS,
+        $secondPartRequest=""; // WHERE `colonne` = champs
+        
+        
+    }*/
+
+    /**
+     * @param PDO $pdoObject: obj de connexion PDO pour pouvoir faire les requête
+     * @param String $request: la requête qu'on veut executé.
+     * @return Array $ReadableArrayData le tableau contenant les données sous forme tableau-associatif
+    */
+    public static function ReqRead(PDO $pdoObject,string $request) : array {
+
+        $statement=$pdoObject->prepare($request); 
+        $statement->execute();
+        $ReadableArrayData=$statement->fetchAll(PDO::FETCH_ASSOC);
+        return $ReadableArrayData;
+
+    } 
+
+    /**
+     * @param Array $ParamDelArray: tableau contenant le nécessaire pour faire la requête 
+     * le tableau doit prendre la forme suivante : (1ère clé pour la table, seconde pour le nom du champ de la clé primaire et la troisième clé
+     * est associé à un tableau de l'ensemble des choses à supprimer (si le tableau est vide ça pruge la table : DELETE FROM TABLE) : 
+     * [
+     * 'table'=>'nomtable',
+     * 'primaryKName'=>'nomPk',
+     * 'identifiants'=>[X,X,X]
+     * ]
+     * @return Bool true = suppresion réussie, false : suppresion échouée
+     */
+    public static function ReqDelete(Array $ParamDelArray):bool{
+        $request=RequeteClasse::prepareDelete($ParamDelArray);
+        $requestResult=RequeteClasse::prepareThenExecute($request);
+        return $requestResult;
+
+    }
+    /**
+     * @param Array $ParamReqUpd: tableau contenant le nécessaire pour faire la requête 
      * le tableau doit prendre la forme suivante : (1ère clé pour la table, seconde pour le nom du champ de la clé primaire et la troisième clé
      * est associé à un tableau de l'ensemble des choses à modifier : 
      * [
@@ -164,7 +251,31 @@ class RequeteClasse{
      * ]
      * @return Bool true = modification réussie, false : modification échouée
      */
-    public static function ReqUpdate(PDO $pdoObject, Array $BaseReqUpd, Array $FieldValueUpd):bool{
+    public static function ReqUpdate(Array $ParamReqUpd,Array $FieldValueUpd):bool{      
+        $request=RequeteClasse::prepareUpdate($ParamReqUpd,$FieldValueUpd);
+        $requestResult=RequeteClasse::prepareThenExecute($request);
+        return $requestResult;
+ 
+     } 
+ 
+    /**
+     * @param Array $ParamReqUpd: tableau contenant le nécessaire pour faire la requête 
+     * le tableau doit prendre la forme suivante : (1ère clé pour la table, seconde pour le nom du champ de la clé primaire et la troisième clé
+     * est associé à un tableau de l'ensemble des choses à modifier : 
+     * [
+     * 'table'=>'nomtable',
+     * 'primaryKName'=>'nomPk',
+     * 'identifiants'=>[X,X,X]
+     * ] 
+     * @param Array $FieldValueUpd : tableau contenant une clé unique qui a pour valeur associée un tableau pair clé-valeur qui sert à modifier les enregistrements : 
+     * [
+     * 'indices'=>[
+     *'champ1'=>'nouvellevaleur1',
+     *'champ2'=>'nouvellevaleur2'
+     * ]
+     * @return string $finalUpdateRequest : l'ordre sql prêt à être executé
+     */
+    public static function prepareUpdate(Array $BaseReqUpd, Array $FieldValueUpd):?string{
         $finalUpdateRequest=""; //toute la requête
         $firstPartRequest=""; // UPDATE TABLE
         $secondPartRequest=""; //`CHAMP` = 'VALUE'
@@ -176,7 +287,7 @@ class RequeteClasse{
         $firstPartRequest=" UPDATE $nomTable";
         //recup tableau sans la table et la pk, que la clé et le sous tableau des id à update
         $intermediateArrayForUpdRequest=array_slice($BaseReqUpd,2); 
-        //construction de la dernière partie de la requête après le WHERE : `ccléprimairehamp`='value' OR `cléprimaire`='value2'
+        //construction de la dernière partie de la requête après le WHERE : `cléprimairechamp`='value' OR `cléprimaire`='value2'
         foreach($intermediateArrayForUpdRequest as $listOfUpdtableItem){
             $lastItem=end($listOfUpdtableItem);
             foreach($listOfUpdtableItem as $key=>$value){
@@ -189,7 +300,6 @@ class RequeteClasse{
 
             }
         } 
-
         $intermediateArrayForField=array_slice($FieldValueUpd,0); //récupération du tableau sous forme ['champ'=>['clé1'=>'value1','clé2'=>'value2']]
         foreach($intermediateArrayForField as $listOfSetField){
             $lastItemField=end($listOfSetField); 
@@ -205,46 +315,53 @@ class RequeteClasse{
 
             }
         }
-
-
         $finalUpdateRequest=$firstPartRequest." SET ".$secondPartRequest."WHERE ".$thirdPartRequest;
-        $statementUpdate=$pdoObject->prepare($finalUpdateRequest);
-        return $statementUpdate->execute();
+        return $finalUpdateRequest;
         
     }
 
 //FIN DE LA CLASSE
 }
+/*****************************FIN REQUETE CRUD*************************************** */
+/*****************************FIN REQUETE CRUD*************************************** */ 
+/*****************************FIN REQUETE CRUD*************************************** */ 
 
-/* FIN DE LA DEUXIEME CLASSE SUR REQUETAGE MODELE */
 
 
 
-/* TEST SUR UPDATE 
+/*****************************PARTIE TEST*************************************** */ 
+/*****************************PARTIE TEST*************************************** */
+/*****************************PARTIE TEST*************************************** */
+/*****************************PARTIE TEST*************************************** */ 
 
+/*TEST SUR UPDATE 
 $tableauUpdtBase=[
     'table'=>'t_produit',
     'primaryKName'=>'id',
-    'identifiants'=>[2,4]
+    'identifiants'=>[3,8]
 
 ]; 
 
 $tableauUpdtSuite=[
     'indices'=>[
-        'nomproduit'=>'nouvellevaleur',
-        'qtepdt'=>'8'
+        'nomproduit'=>'hello',
+        'qtepdt'=>'4'
     ]
 ];
-$var=RequeteClasse::ReqUpdate($obj,$tableauUpdtBase,$tableauUpdtSuite);
+$var=RequeteClasse::ReqUpdate($tableauUpdtBase,$tableauUpdtSuite);
 var_dump($var);*/
+
+
+
+
 /* TEST SUR LA SUPRESSION  
 $tableauSuppr=[
     'table'=>'t_produit',
     'primaryKName'=>'id',
-    'identifiants'=>[1,5]
+    'identifiants'=>[3,4]
 
 ];
-$var=RequeteClasse::ReqDelete($obj,$tableauSuppr);
+$var=RequeteClasse::ReqDelete($tableauSuppr);
 var_dump($var);*/
 
 
@@ -252,10 +369,12 @@ var_dump($var);*/
 /*TEST SUR L INSERTION
 $tableauReqInsert=[
     "table"=>'t_produit',
-    "nomproduit"=>"poisson",
-    "qtepdt"=>"3",
+    "indice"=>[
+            "nomproduit"=>"beurre",
+            "qtepdt"=>'2'
+            ]
 ];
-$insertion=RequeteClasse::ReqAdd($obj,$tableauReqInsert);
+$insertion=RequeteClasse::ReqAdd($tableauReqInsert);
 var_dump($insertion);*/
 
 
@@ -265,6 +384,10 @@ var_dump($insertion);*/
 /* TEST SUR LA SELECTION */
 
 
+/*****************************PARTIE CONTROLLER*************************************** */ 
+/*****************************PARTIE CONTROLLER*************************************** */ 
+/*****************************PARTIE CONTROLLER*************************************** */ 
+/*****************************PARTIE CONTROLLER*************************************** */ 
 class PseudoController{ 
 
     public static function indexController(){
@@ -285,7 +408,10 @@ class PseudoController{
 <!DOCTYPE html>
 <html>
 <body>
-
+<!--****************************************PARTIE VUE *********************************-->
+<!--****************************************PARTIE VUE *********************************-->
+<!--****************************************PARTIE VUE *********************************-->
+<!--****************************************PARTIE VUE *********************************-->
 <h1>Liste des courses</h1>
 <?php 
 $var=PseudoController::indexController();
