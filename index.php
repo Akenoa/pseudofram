@@ -34,34 +34,56 @@ class ConnexionClasse {
     }
     
 } 
-/* FIN DE LA PREMIERE CLASSE CREATION D UNE INSTANCE DE CONNEXION */ 
+/* FIN DE LA PREMIERE CLASSE CREATION D UNE INSTANCE DE CONNEXION */  
 
-class RequeteClasse{ 
+class OutilRequete{
+    /** 
+     * @param Array $arrayForRequest : le tableau qui sera utilisé pour faire requête
+     * @return String nom de la table sur laquelle intéragir.
+     */
+    public static function getNomTable(Array $arrayForRequest):?String{
+        $nomTable="`".$arrayForRequest['table']."`";
+        return $nomTable;
+
+    }
+    /** 
+     * @param Array $arrayForRequest : le tableau qui sera utilisé pour faire requête
+     * @return String nom du champ en clé primaire dans la table
+     */
+    public static function getNomPrimaryKey(Array $arrayForRequest):?String{
+        $nomPK="`".$arrayForRequest['primaryKName']."`";
+        return $nomPK;
+
+    } 
+    /** 
+     * @param Array $arrayForRequest : le tableau qui sera utilisé pour faire requête
+     * @param Int  $debutSequence : index de debut de séquenc pour couper le tableau.
+     * @return String nom du champ en clé primaire dans la table
+     */ 
+    public static function getSlicedArray(Array $arrayForRequest,int $debutSequence):?Array{
+        return array_slice($arrayForRequest,$debutSequence);
+    }
 
     /**
      * @return PDO object pour se connecter.
      */
-    public static function faisConnexion():?PDO{
+    public static function getCnx():?PDO{ 
         return ConnexionClasse::CreerPDO();
     }
 
-    /*
-    * @param Arram $arrayOfLastItemDesired 
-    * @return the last item of array.
-    
-    public static function donneDernierItem(Array $arrayOfLastItemDesired){
-        $lastItemArray = end($arrayOfLastItemDesired);
-        return $lastItemArray;
+}
 
-    }
-    */
+class RequeteClasse{ 
+
+    
+
 
     /*
     * @param String $request la requete qu'on veut préparer puis executer
     * @return Bool résultat si la requête réussi true sinon false
     */ 
     public static function prepareThenExecute(string $request):?bool{
-        $objPdo=RequeteClasse::faisConnexion();
+        $objPdo=OutilRequete::getCnx();
         $requestStatement=$objPdo->prepare($request);
         return $requestStatement->execute();
 
@@ -72,18 +94,19 @@ class RequeteClasse{
     * @return Array tableau assoaciatif des résultat à lire
     */ 
     public static function prepareThenExecuteReadDataAssoc(string $request):?Array{
-        $objPdo=RequeteClasse::faisConnexion();
+        $objPdo=OutilRequete::getCnx();
         $requestStatement=$objPdo->prepare($request);
         $requestStatement->execute();
         $arrayOfDataResult=$requestStatement->fetchAll(PDO::FETCH_ASSOC);
 
     }
-     /*
+    
+    /*
     * @param String $request la requete qu'on veut préparer puis executer
     * @return Array tableau indexé en partant de 0
     */ 
     public static function prepareThenExecuteReadDataNum(string $request):?Array{
-        $objPdo=RequeteClasse::faisConnexion();
+        $objPdo=OutilRequete::getCnx();
         $requestStatement=$objPdo->prepare($request);
         $requestStatement->execute();
         $arrayOfDataResult=$requestStatement->fetchAll(PDO::FETCH_NUM);
@@ -107,11 +130,11 @@ class RequeteClasse{
         $secondPartRequest="";
         $finalRequest="";//la requête à retourner à la fin
 
-        $nomtable="`".$ParamReqAdd['table']."`";
+        $nomtable=OutilRequete::getNomTable($ParamReqAdd);
         $firstPartRequest="INSERT INTO $nomtable ( ";
         $secondPartRequest=" VALUES (";
 
-        $arrayKeyIndice=array_splice($ParamReqAdd,1); // ['indice'=>['champ'=>'valeur]]
+        $arrayKeyIndice=OutilRequete::getSlicedArray($ParamReqAdd,1); // ['indice'=>['champ'=>'valeur]]
         foreach($arrayKeyIndice as $listOfInsertField){
             $lastElement=end($listOfInsertField); //récupérer le dernier élément pour pouvoir clore la requête
             foreach($listOfInsertField as $key=>$value){
@@ -145,11 +168,11 @@ class RequeteClasse{
         $secondPartRequest="";
         $finalRequest="";//ce qu'on va retourner à la fin 
     
-        $nomtable="`".$ParamReqDel['table']."`";
-        $primaryKeyName="`".$ParamReqDel['primaryKName']."`";
+        $nomtable=OutilRequete::getNomTable($ParamReqDel);
+        $primaryKeyName=OutilRequete::getNomPrimaryKey($ParamReqDel);
         $firstPartRequest="DELETE FROM $nomtable  ";
     
-        $intermediateArrayForDelRequest=array_slice($ParamReqDel,2); // ['indice'=>['champ'=>'valeur]]
+        $intermediateArrayForDelRequest=OutilRequete::getSlicedArray($ParamReqDel,2); // ['indice'=>['champ'=>'valeur]]
         foreach($intermediateArrayForDelRequest as $listOfDeletableItem){
             $lastItem=end($listOfDeletableItem); //recupére le dernier element du tableau pour écrire correctement l'ordre sql
             //la liste des choses à supprimer est vide à 0  ->purge de la table
@@ -187,7 +210,7 @@ class RequeteClasse{
      */
     public static function ReqAdd(Array $ParamReqAdd): bool{      
        $request=RequeteClasse::prepareInsert($ParamReqAdd);
-       $requestResult=RequeteClasse::prepareThenExecute($request);
+       $requestResult=OutilRequete::prepareThenExecute($request);
         return $requestResult;
 
     } 
@@ -281,12 +304,12 @@ class RequeteClasse{
         $secondPartRequest=""; //`CHAMP` = 'VALUE'
         $thirdPartRequest=""; // `PK`=VALUE PAS OUBLIER D AJOUTER WHERE A LA FIN
         
-        $nomTable="`".$BaseReqUpd['table']."`"; // utile à syntaxe sql
-        $primaryKeyName="`".$BaseReqUpd['primaryKName']."`";// utile syntaxe sql
+        $nomTable=RequeteClasse::getNomTable($BaseReqUpd); // utile à syntaxe sql
+        $primaryKeyName=RequeteClasse::getNomPrimaryKey($BaseReqUpd);// utile syntaxe sql
 
         $firstPartRequest=" UPDATE $nomTable";
         //recup tableau sans la table et la pk, que la clé et le sous tableau des id à update
-        $intermediateArrayForUpdRequest=array_slice($BaseReqUpd,2); 
+        $intermediateArrayForUpdRequest=OutilRequete::getSlicedArray($BaseReqUpd,2); 
         //construction de la dernière partie de la requête après le WHERE : `cléprimairechamp`='value' OR `cléprimaire`='value2'
         foreach($intermediateArrayForUpdRequest as $listOfUpdtableItem){
             $lastItem=end($listOfUpdtableItem);
@@ -300,7 +323,7 @@ class RequeteClasse{
 
             }
         } 
-        $intermediateArrayForField=array_slice($FieldValueUpd,0); //récupération du tableau sous forme ['champ'=>['clé1'=>'value1','clé2'=>'value2']]
+        $intermediateArrayForField=OutilRequete::getSlicedArray($FieldValueUpd,0); //récupération du tableau sous forme ['champ'=>['clé1'=>'value1','clé2'=>'value2']]
         foreach($intermediateArrayForField as $listOfSetField){
             $lastItemField=end($listOfSetField); 
             //construction de la seconde partie de la requête après le SET `nomchamp`='nouvellevaleur',`nomchamp2`='nouvellevaleur2' 
