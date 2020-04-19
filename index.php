@@ -30,7 +30,7 @@ abstract class ModelBase{
     * @return String la seconde partie de la requête pour faire une lecture si chaîne vide alors prend tout champs de la table
     * IDEE pour where penser à envoyé 2 tableau field et champs les combine faire un foreach comme dans delete/update
     */
-    protected function getSelectFromTable($FieldToSelect=null){
+    public function getSelectFromTable($FieldToSelect=null){
         $nomTable = "`".$this->nomTable."`";
         $firstPartRequest="SELECT ";
         $secondPartRequest="";
@@ -39,7 +39,10 @@ abstract class ModelBase{
             $secondPartRequest.=" $fields ";
 
         }
-        $secondPartRequest="*";
+        else {
+            $secondPartRequest.="*";
+        }
+        
         $beforeWherePart=" FROM $nomTable ";
 
         $finalRequest=$firstPartRequest.$secondPartRequest.$beforeWherePart;
@@ -50,31 +53,31 @@ abstract class ModelBase{
     /* 
     * @return String la première partie de la requête pour  faire une insertion
     */
-    protected function getFirstInsertPartRequest():string{
-        $firstPartRequest="";
+    public function getFirstInsertPartRequest():string{
+        $firstPartInsertRequest="";
         $nomTable = "`".$this->nomTable."`"; //cas ou ID pas auto increment?
-        $firstPartInsertRequest = "INSERT INTO `$nomTable` ";
-        return $firstPartRequest; 
+        $firstPartInsertRequest = "INSERT INTO $nomTable ";
+        return $firstPartInsertRequest; 
     }
 
 
     /* 
     * @return String la première partie de la requête pour  faire une supression
     */
-    protected function getFirstDeletePartRequest():string{
-        $firstPartRequest="";
+    public function getFirstDeletePartRequest():string{
+        $firstPartDeleteRequest="";
         $nomTable = "`".$this->nomTable."`";
-        $firstPartDeleteRequest = "DELETE FROM `$nomTable` ";
-        return $firstPartRequest; 
+        $firstPartDeleteRequest = "DELETE FROM $nomTable ";
+        return $firstPartDeleteRequest; 
     }     
 
     /*
     * @optionalParam $IndexToDelete tableau contenant les idS des enregistrement à supprimer.
     * @return String la seconde partie de la requête pour faire une suppression si chaîne vide alors purge table
     */
-    protected function getSecondDeletePartRequest($IndexToDelete=null){
+    public function getSecondDeletePartRequest($IndexToDelete=null){
         $secondPartRequest="";
-        $primaryKey="`".$this->$primaryKeyName."`";
+        $primaryKey="`".$this->primaryKeyName."`";
         if(isset($IndexToDelete) && is_array($IndexToDelete)){
             $lastElement=end($IndexToDelete);
             $secondPartRequest="WHERE $primaryKey = ";
@@ -98,7 +101,7 @@ abstract class ModelBase{
     * @param Array les valeurs à associé à ces champs.
     * @return String la reuqête complète pour une insertion
     */
-    protected function getSecondInsertPartRequest(array $ArrayField,array $ArrayValue):string{
+    public function getSecondInsertPartRequest(array $ArrayField,array $ArrayValue):string{
         $ArrayFieldValue=array_combine($ArrayField,$ArrayValue);
         $secondPartRequest="";
         $fields="`".implode("`,`",array_keys($ArrayFieldValue))."`"; // `champ1`,`champ2`
@@ -114,7 +117,7 @@ abstract class ModelBase{
     /*
     * @return String la première partie de la requête pour update
     */ 
-    protected function getFirstUpdatePartRequest():string{
+    public function getFirstUpdatePartRequest():string{
         $firstPartRequest="";
         $nomTable = "`".$this->nomTable."`";
         //$primaryKey="`".$this->$primaryKeyName."`";
@@ -128,8 +131,8 @@ abstract class ModelBase{
     * @param Array $newSetableValue tableau contenant les nouvelles valeursà aattribuer
     * @return String la seconde partie de la requête pour update `champ`=`val`
     */ 
-    protected function getSecondUpdatePartRequest(array $FieldToUpdate, array $newSetableValue):string {
-        $ArrayFieldValue=array_combine($FieldToUpdate,$newSetableFieldValue);
+    public function getSecondUpdatePartRequest(array $FieldToUpdate, array $newSetableValue):string {
+        $ArrayFieldValue=array_combine($FieldToUpdate,$newSetableValue);
         $lastElem=end($ArrayFieldValue);
         $secondPart="";
         foreach($ArrayFieldValue as $key=>$value){
@@ -150,8 +153,8 @@ abstract class ModelBase{
     * WHERE `pk`='indexN' OR ... 
     * @return String la fin de la requête update avec le where 
     */
-    protected function getThirdUpdateRequest(array $IndexToUpdate):string{
-        $primaryKey="`".$this->$primaryKeyName."`";
+    public function getThirdUpdateRequest(array $IndexToUpdate):string{
+        $primaryKey="`".$this->primaryKeyName."`";
         $thirdPartRequest=" WHERE $primaryKey = ";
         $lastElem=end($IndexToUpdate);
         foreach($IndexToUpdate as $value){
@@ -170,8 +173,8 @@ abstract class ModelBase{
     * @param String $request la requete qu'on veut préparer puis executer
     * @return Bool résultat si la requête réussi true sinon false
     */ 
-    public static function prepareThenExecute(string $request):?bool{
-        $objPdo=OutilRequete::getCnx();
+    public function prepareThenExecute(string $request):?bool{
+        $objPdo=ConnexionClasse::getCnx();
         $requestStatement=$objPdo->prepare($request);
         try{
             return $requestStatement->execute();
@@ -188,7 +191,7 @@ abstract class ModelBase{
     * @param Array les valeursà associé à ces champs.
     * @return String la requête complète pour une insertion
     */
-    protected function FullInsertRequest(array $ArrayField,array $ArrayValue):string{ 
+    public function FullInsertRequest(array $ArrayField,array $ArrayValue):string{ 
         $firstPart=$this->getFirstInsertPartRequest();
         $secondPart=$this->getSecondInsertPartRequest($ArrayField,$ArrayValue);
         $finalRequest = $firstPart.$secondPart;
@@ -200,9 +203,9 @@ abstract class ModelBase{
     * @optionalParam $IndexToDelete tableau contenant les idS des enregistrement à supprimer.
     * @return String la requête complète pour une supression
     */
-    protected function FullDeleteRequest($IndexToDelete=null):string{ 
-        $firstPart=$this->getFirstInsertPartRequest();
-        $secondPart=$this->getSecondInsertPartRequest($ArrayField,$ArrayValue);
+    public function FullDeleteRequest($IndexToDelete=null):string{ 
+        $firstPart=$this->getFirstDeletePartRequest();
+        $secondPart=$this->getSecondDeletePartRequest($IndexToDelete);
         $finalRequest = $firstPart.$secondPart;
         return $finalRequest;
 
@@ -215,7 +218,7 @@ abstract class ModelBase{
     * @param Array $newSetableValue tableau contenant les nouvelles valeursà aattribuer
     * @return String la requête complète pour une modification
     */
-    protected function FullUpdateRequest(array $IndexToUpdate,array $FieldToUpdate, array $newSetableValue):string{
+    public function FullUpdateRequest(array $IndexToUpdate,array $FieldToUpdate, array $newSetableValue):string{
 
         $firstPart=$this->getFirstUpdatePartRequest();
         $secondPart=$this->getSecondUpdatePartRequest($FieldToUpdate,$newSetableValue);
@@ -236,8 +239,9 @@ class ProduitModel extends ModelBase{
     function  __construct(String $tableName,String $primaryKey,Array $ColumunArray){
         $this->nomTable=$tableName;
         $this->primaryKeyName=$primaryKey;
-        parent::__construct($this->nomTable,$this->primaryKeyName);
         $this->columnOfTable=$ColumunArray;
+        parent::__construct($this->nomTable,$this->primaryKeyName);
+        
     }
 
     public function getTable():?string{
@@ -287,7 +291,7 @@ class ConnexionClasse {
     public static $dbh;
 
     /*  méthode static pour créer une instance pdo */
-    public static function CreerPDO():?PDO{
+    public static function getCnx():?PDO{
         self::$dsn="mysql:dbname=".Config::DB.";host=".Config::HOSTNAME;
         try{
             self::$dbh = new PDO(self::$dsn,Config::USR,Config::PWD);
@@ -315,20 +319,22 @@ class ConnexionClasse {
 class PseudoController{ 
 
     public static function indexController(){
-        $obj=ConnexionClasse::CreerPDO();
+        /*$obj=ConnexionClasse::CreerPDO();
         $request="SELECT nomproduit,qtepdt FROM t_produit";
         $arrayResult=RequeteClasse::ReqRead($obj,$request);
-        return $arrayResult;
+        return $arrayResult;*/
     }
 
     public static function testModel(){
         //$mdl=new ModelBase('t_produit','id');
         $array=['nomproduit','qtepdt'];
-        $pdt = new ProduitModel('t_produit','id',$array);     
-        $arrayValue=['compote de pomme','10'];
-        $request = $pdt->prepareInsertModel($arrayValue);
-        //return $request;
-        return RequeteClasse::prepareThenExecute($request);
+        $pdt = new ProduitModel('t_produit','id',$array); 
+        $arrCol=$pdt->getColumn();
+        $arrInd=['2','3'];
+        $newVarArr=['riznouveau','tomatenouvelle'];
+        $request=$pdt->FullUpdateRequest($arrInd,$arrCol,$newVarArr);
+        return $request;
+        //return $pdt->prepareThenExecute($request);
 
 
     }
@@ -350,10 +356,10 @@ class PseudoController{
 <!--****************************************PARTIE VUE *********************************-->
 <h1>Liste des courses</h1>
 <?php 
-$var=PseudoController::indexController();
+/*$var=PseudoController::indexController();
     foreach($var as $key=>$value){
         echo "Id : $key  / nom complet :  {$value['nomproduit']} / quantité : {$value['qtepdt']} <br />";  
-    }
+    }*/
 $foo=PseudoController::testModel();
 var_dump($foo);
 ?>
