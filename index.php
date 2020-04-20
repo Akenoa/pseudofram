@@ -28,13 +28,12 @@ class PseudoController{
         //$mdl=new ModelBase('t_produit','id');
         $array=['nomproduit','qtepdt'];
         $pdt = new ProduitModel('t_produit','id',$array); 
-        $arrCol=$pdt->getColumn();
-        $arrInd=['2','3'];
-        $newVarArr=['riznouveau','8'];
-        $request=$pdt->FullUpdateRequest($arrInd,$arrCol,$newVarArr);
+        //$arrCol=$pdt->getColumn();
+        $request="SELECT * S  ";
+        //$request=$pdt->getSelectFromTable();
         //return $request;
         return $pdt->prepareThenExecute($request);
-
+        //return $pdt->prepareThenReadData($request);
 
     }
     
