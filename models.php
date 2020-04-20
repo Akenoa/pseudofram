@@ -15,26 +15,52 @@ abstract class ModelBase{
     }
 
     /*
-    * @optionalParam $FieldToSelect tableau contenant le nom des champs à sélectionné
+    * @optionalParam $FieldToSelect tableau contenant le nom des champs à sélectionné sinon fait un select *
+    * @optionalParam $whereClause chaine contenant la clause where
+    * @optionalParam $orderByClause chaine contenant la clause order by
+    * @optionalParam $limitClause chaine contenant la clause limit
     * @return String la seconde partie de la requête pour faire une lecture si chaîne vide alors prend tout champs de la table
-    * IDEE pour where penser à envoyé 2 tableau field et champs les combine faire un foreach comme dans delete/update
     */
-    public function getSelectFromTable($FieldToSelect=null){
+    public function getSelectFromTable($FieldToSelect=null,$whereClause=null,$orderByClause=null,$limitClause=null){
         $nomTable = "`".$this->nomTable."`";
-        $firstPartRequest="SELECT ";
-        $secondPartRequest="";
+        $firstPart="SELECT ";
+        $beforeWherePart=" FROM $nomTable ";
+        $secondPart="";
+        
+        //prend champs ou tout si rien d'indiqué
         if(isset($FieldToSelect) && is_array($FieldToSelect)){
             $fields="`".implode("`,`",$FieldToSelect)."`";
-            $secondPartRequest.=" $fields ";
+            $secondPart.=" $fields ";
 
         }
         else {
-            $secondPartRequest.="*";
+            $secondPart.="*";
+        } 
+        //clause where
+        if(isset($whereClause) && is_string($whereClause)){
+            $wherePart = " WHERE ".$whereClause;
+        }
+        else {
+            $wherePart="";
+        }
+        //clause order by
+        if(isset($orderByClause) && is_string($orderByClause)){
+            $orderPart = " ORDER BY ".$orderByClause;
+        }
+        else {
+            $orderPart="";
+        }
+        //clause limit 10 10,50 ... etc
+        if(isset($limitClause) && is_string($limitClause)){
+            $limitPart = " LIMIT ".$limitClause;
+        }
+        else {
+            $limitPart="";
         }
         
-        $beforeWherePart=" FROM $nomTable ";
+        
 
-        $finalRequest=$firstPartRequest.$secondPartRequest.$beforeWherePart;
+        $finalRequest=$firstPart.$secondPart.$beforeWherePart.$wherePart.$orderPart.$limitPart;
         return $finalRequest;
 
     }
@@ -43,10 +69,10 @@ abstract class ModelBase{
     * @return String la première partie de la requête pour  faire une insertion
     */
     public function getFirstInsertPartRequest():string{
-        $firstPartInsertRequest="";
+        $firstPartInsert="";
         $nomTable = "`".$this->nomTable."`"; //cas ou ID pas auto increment?
-        $firstPartInsertRequest = "INSERT INTO $nomTable ";
-        return $firstPartInsertRequest; 
+        $firstPartInsert = "INSERT INTO $nomTable ";
+        return $firstPartInsert; 
     }
 
 
@@ -54,10 +80,10 @@ abstract class ModelBase{
     * @return String la première partie de la requête pour  faire une supression
     */
     public function getFirstDeletePartRequest():string{
-        $firstPartDeleteRequest="";
+        $firstPart="";
         $nomTable = "`".$this->nomTable."`";
-        $firstPartDeleteRequest = "DELETE FROM $nomTable ";
-        return $firstPartDeleteRequest; 
+        $firstPart = " DELETE FROM $nomTable ";
+        return $firstPart; 
     }     
 
     /*
@@ -65,39 +91,41 @@ abstract class ModelBase{
     * @return String la seconde partie de la requête pour faire une suppression si chaîne vide alors purge table
     */
     public function getSecondDeletePartRequest($IndexToDelete=null){
-        $secondPartRequest="";
+        $secondPart="";
         $primaryKey="`".$this->primaryKeyName."`";
         if(isset($IndexToDelete) && is_array($IndexToDelete)){
             $lastElement=end($IndexToDelete);
-            $secondPartRequest="WHERE $primaryKey = ";
+            $secondPart="WHERE $primaryKey = ";
             foreach($IndexToDelete as $value){
                 if($value===$lastElement){
-                    $secondPartRequest.=" $value ";
+                    $secondPart.=" $value ";
 
                 }
                 else{
-                    $secondPartRequest.=" $value OR $primaryKey = ";
+                    $secondPart.=" $value OR $primaryKey = ";
                 }
 
             }
         }
-        return $secondPartRequest;
+        return $secondPart;
 
     }
 
     /* 
-    * @param Array le nom des champs de la table
+    * @param Array le nom des champs de la table 
+    * si l'id est  AI on peut le mettre à null ça va insérer si pas AI on peut mettre une valeur grâce aux tableau.
     * @param Array les valeurs à associé à ces champs.
-    * @return String la reuqête complète pour une insertion
+    * @return String la requête complète pour une insertion
     */
     public function getSecondInsertPartRequest(array $ArrayField,array $ArrayValue):string{
+       
         $ArrayFieldValue=array_combine($ArrayField,$ArrayValue);
-        $secondPartRequest="";
+        $secondPart="";
         $fields="`".implode("`,`",array_keys($ArrayFieldValue))."`"; // `champ1`,`champ2`
         $fieldValues="'".implode("','",$ArrayFieldValue)."'"; //'valeur1','champ1'
 
-        $secondPartRequest="($fields) VALUES ($fieldValues)";
-        return $secondPartRequest;
+        $secondPart="($fields) VALUES ($fieldValues)";
+        return $secondPart;
 
     }
     
@@ -107,11 +135,11 @@ abstract class ModelBase{
     * @return String la première partie de la requête pour update
     */ 
     public function getFirstUpdatePartRequest():string{
-        $firstPartRequest="";
+        $firstPart="";
         $nomTable = "`".$this->nomTable."`";
         //$primaryKey="`".$this->$primaryKeyName."`";
-        $firstPartRequest = "UPDATE $nomTable SET ";
-        return $firstPartRequest; 
+        $firstPart = "UPDATE $nomTable SET ";
+        return $firstPart; 
 
     }
 
@@ -144,36 +172,20 @@ abstract class ModelBase{
     */
     public function getThirdUpdateRequest(array $IndexToUpdate):string{
         $primaryKey="`".$this->primaryKeyName."`";
-        $thirdPartRequest=" WHERE ";
+        $thirdPart=" WHERE ";
         $lastElem=end($IndexToUpdate);
         foreach($IndexToUpdate as $value){
             if($value===$lastElem) {
-                $thirdPartRequest.=" $primaryKey = '$value' ";
+                $thirdPart.=" $primaryKey = '$value' ";
             }
             else
             {
-                $thirdPartRequest.=" $primaryKey = '$value' OR ";
+                $thirdPart.=" $primaryKey = '$value' OR ";
             }
         }
-        return $thirdPartRequest;
-    }
-
-    /*
-    * @param String $request la requete qu'on veut préparer puis executer
-    * @return Bool résultat si la requête réussi true sinon false
-    */ 
-    public function prepareThenExecute(string $request):?bool{
-        $objPdo=ConnexionClasse::getCnx();
-        $requestStatement=$objPdo->prepare($request);
-        try{
-            return $requestStatement->execute();
-        }
-        catch(Exception $error){
-            return "Une erreur est survenue au moment de réalisé la requête " . $error->getMessage();
-        }
-        
-
-    }
+        return $thirdPart;
+    }  
+   
 
     /* 
     * @param Array le nom des champs de la table
@@ -218,6 +230,76 @@ abstract class ModelBase{
 
     }
 
+    /*
+    * @param String $request la requete qu'on veut préparer puis executer
+    * @return Array résultat sous forme de tableau  indexé numérique démarrant à 0.
+    */
+    public function prepareThenReadDataAssocNum(string $request):?Array{
+        $objPdo=ConnexionClasse::getCnx();
+        $requestStatement=$objPdo->prepare($request);
+        $requestStatement->execute();
+        $resultDataFETCH[] = $requestStatement->fetch(PDO::FETCH_NUM);
+        foreach($resultDataFETCH as $key=>$value){
+            $dataReadArray[$key]=$value;
+        }
+        return $dataReadArray;
+
+
+    }
+
+    /*
+    * @param String $request la requete qu'on veut préparer puis executer
+    * @return Array résultat sous forme de tableau avec de sindex numérique et aussi clé en tant qu'index(associatif)
+    */
+    public function prepareThenReadDataAssocAll(string $request):?Array{
+        $objPdo=ConnexionClasse::getCnx();
+        $requestStatement=$objPdo->prepare($request);
+        $requestStatement->execute();
+        $resultDataFETCH[] = $requestStatement->fetch(PDO::FETCH_BOTH);
+        foreach($resultDataFETCH as $key=>$value){
+            $dataReadArray[$key]=$value;
+        }
+        return $dataReadArray;
+
+
+    }
+
+    /*
+    * @param String $request la requete qu'on veut préparer puis executer
+    * @return Bool résultat si la requête réussi true sinon une chaîne avec un message
+    */ 
+    public function prepareThenExecute(string $request){
+        $objPdo=ConnexionClasse::getCnx();
+        $requestStatement=$objPdo->prepare($request);
+        if($requestStatement->execute()){
+            return $requestStatement->execute();
+        }
+        else{
+            $msg="Il y a une erreur sur la requête";
+            return $msg;
+        }
+        
+        
+        
+
+    }
+    /*
+    * @param String $request la requete qu'on veut préparer puis executer
+    * @return Array résultat sous forme de tableau associatif.
+    */
+    public function prepareThenReadDataAssoc(string $request):?Array{
+        $objPdo=ConnexionClasse::getCnx();
+        $requestStatement=$objPdo->prepare($request);
+        $requestStatement->execute();
+        $resultDataFETCH[] = $requestStatement->fetch(PDO::FETCH_ASSOC);
+        foreach($resultDataFETCH as $key=>$value){
+            $dataReadArray[$key]=$value;
+        }
+        return $dataReadArray;
+
+
+    }
+
 
 }
 
@@ -242,8 +324,21 @@ class ProduitModel extends ModelBase{
         return $this->primaryKeyName;
     }
 
+    /*
+    * @return Array tout les champs de la table
+    */
     public function getColumn():array{
         return $this->columnOfTable;
+    }
+
+    /*
+    * @return Array tout les champs de la table avec en première position la pk
+    */
+    public function getColumnAndPk():array{
+        $primaryKey=$this->primaryKeyName;
+        $columnofTable= $this->columnOfTable;
+        array_unshift($columnofTable,$primaryKey);
+        return $columnofTable;
     }
     
     /*INSERT INTO table (nom_colonne_1, nom_colonne_2, ...
