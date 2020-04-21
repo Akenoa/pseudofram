@@ -15,6 +15,23 @@ abstract class ModelBase{
     }
 
     /*
+    * @return string nomtable : le nom de la table.
+    */
+    public function getNomTable():string{
+        return $this->nomTable;
+
+    }
+    /*
+    * @return string primaryKeyName : le nom de la clé primaire de la table.
+    */
+    public function getPrimaryKeyName():string{
+        return $this->primaryKeyName;
+    } 
+
+    abstract protected function getColumn():string;
+    abstract protected function getColumnAndPk():array;
+
+    /*
     * @optionalParam $FieldToSelect tableau contenant le nom des champs à sélectionné sinon fait un select *
     * @optionalParam $whereClause chaine contenant la clause where
     * @optionalParam $orderByClause chaine contenant la clause order by
