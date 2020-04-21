@@ -28,7 +28,7 @@ abstract class ModelBase{
         return $this->primaryKeyName;
     } 
 
-    abstract protected function getColumn():string;
+    abstract protected function getColumn():array;
     abstract protected function getColumnAndPk():array;
 
     /*
