@@ -28,8 +28,8 @@ abstract class ModelBase{
         return $this->primaryKeyName;
     } 
 
-    abstract protected function getColumn():array;
-    abstract protected function getColumnAndPk():array;
+    //abstract protected function getColumn():array;
+    //abstract protected function getColumnAndPk():array;
 
     /*
     * @optionalParam $FieldToSelect tableau contenant le nom des champs à sélectionné sinon fait un select *
@@ -320,66 +320,34 @@ abstract class ModelBase{
 
 }
 
-class ProduitModel extends ModelBase{ 
+class RealModel extends ModelBase{ 
 
-    private $columnOfTable;
+    private $modelProperties;
 
-    function  __construct(String $tableName,String $primaryKey,Array $ColumunArray){
+    function  __construct(String $tableName,String $primaryKey,Array $PropertiesArray){
         $this->nomTable=$tableName;
         $this->primaryKeyName=$primaryKey;
-        $this->columnOfTable=$ColumunArray;
+        $this->modelProperties=$PropertiesArray;
+        foreach(array_flip($PropertiesArray) as $key => $value){
+            $this->{$key} = $value;
+          }
         parent::__construct($this->nomTable,$this->primaryKeyName);
         
     }
 
-    public function getTable():?string{
-        return $this->nomTable;
+    public function __set($property,$value){
+        return $this->modelProperties[$property] = $value;
+    } 
 
+    public function __get($property){
+        /*if(array_key_exists($property,$this->modelProperties))
+        {
+            return $this->modelProperties[$property];
+        } 
+        else {
+           return null;
+        }*/
+        return array_key_exists($property,$this->modelProperties) ? $this->modelProperties[$property] : null;
     }
-    
-    public function getPrimaryKeyName():string{
-        return $this->primaryKeyName;
-    }
 
-    /*
-    * @return Array tout les champs de la table
-    */
-    public function getColumn():array{
-        return $this->columnOfTable;
-    }
-
-    /*
-    * @return Array tout les champs de la table avec en première position la pk
-    */
-    public function getColumnAndPk():array{
-        $primaryKey=$this->primaryKeyName;
-        $columnofTable= $this->columnOfTable;
-        array_unshift($columnofTable,$primaryKey);
-        return $columnofTable;
-    }
-    
-    /*INSERT INTO table (nom_colonne_1, nom_colonne_2, ...
- VALUES ('valeur 1', 'valeur 2', ...)*/
-    /*public function prepareInsertModel(array $Tabvaleur){ 
-        $nomtable = "`".$this->nomTable."`";
-        $champs = $this->columnOfTable;
-        $chaineDeChamps = "`".implode("`, `", $champs)."`";
-        $chaineValeur="'".implode("','", $Tabvaleur)."'";
-        $firstPartRequest="INSERT INTO $nomtable ($chaineDeChamps) VALUES($chaineValeur)";
-        return $firstPartRequest;
-        
-    }*/
-
-    /* dans l'éventualité ou on veut faire une requête sur une seule colonne ? 
-    public function getSpecifiCol(string $ColumnIWant):?string{ 
-        foreach($this->columnOfTable as $columnName){
-            if($columnName===$ColumnIWant){
-                return $columnName;
-            }
-        }
-
-    }*/
-
-
-
-}
+  }
