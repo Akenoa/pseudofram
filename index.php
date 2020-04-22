@@ -1,4 +1,5 @@
-<?php 
+<?php
+ini_set('display_errors', 1);
 require_once('conf_cnx.php');
 require('models.php');
 
@@ -27,12 +28,11 @@ class PseudoController{
     public static function testModel(){
         //$mdl=new ModelBase('t_produit','id');
         $array=['nomproduit','qtepdt'];
-        $pdt = new ProduitModel('t_produit','id',$array); 
+        $pdt = new RealModel('t_produit','id',$array); 
         //$arrCol=$pdt->getColumn();
-        $request="SELECT * S  ";
-        //$request=$pdt->getSelectFromTable();
-        //return $request;
-        return $pdt->prepareThenExecute($request);
+        $request=$pdt->nomproduit;
+        return $request;
+        //return $pdt->prepareThenExecute($request);
         //return $pdt->prepareThenReadData($request);
 
     }
