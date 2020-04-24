@@ -2,6 +2,7 @@
 abstract class ModelBase{
     protected $nomTable;
     protected $primaryKeyName;
+    protected  $modelProperties;
     
     /* 
     * CONSTRUCTEUR DE CLASSE
@@ -9,9 +10,14 @@ abstract class ModelBase{
     * @param String le nom de la clé primaire
     * Constructeur de ModelBase contient le minimum pour créer un modèle avec un ID
     */
-    function  __construct(String $tableName,String $primaryKey){
+    function  __construct(String $tableName,String $primaryKey,Array $modelPropertiesArray){
         $this->nomTable=$tableName; 
         $this->primaryKeyName=$primaryKey;
+        $this->modelProperties=$modelPropertiesArray;
+        $CorrectKeyArray=array_fill_keys($modelPropertiesArray,$this->modelProperties);
+        $CorrectKeyValueArray=array_combine($modelPropertiesArray,$this->modelProperties);
+        //$var=array_flip($PropertiesArray);
+        $this->modelProperties=$CorrectKeyValueArray;
     }
 
     /*
@@ -28,8 +34,22 @@ abstract class ModelBase{
         return $this->primaryKeyName;
     } 
 
-    //abstract protected function getColumn():array;
-    //abstract protected function getColumnAndPk():array;
+    /*
+    * @return array modelPropertiesArray : le nom des colonnes de la table sans la clé primaire 
+    */
+    public function getColumn():array{
+        return $this->modelProperties;
+    }
+    
+    /*
+    * @return array primaryKeyName : le nom des colonnes de la table sans la clé primaire 
+    */
+    public function getPkANDColumn():array{ 
+
+        array_unshift($this->modelProperties,$this->primaryKeyName);
+        return $this->modelProperties;
+    }
+
 
     /*
     * @optionalParam $FieldToSelect tableau contenant le nom des champs à sélectionné sinon fait un select *
@@ -62,7 +82,7 @@ abstract class ModelBase{
         }
         //clause order by
         if(isset($orderByClause) && is_string($orderByClause)){
-            $orderPart = " ORDER BY ".$orderByClause;
+            $orderPart = " ORDER BY $orderByClause ";
         }
         else {
             $orderPart="";
@@ -255,7 +275,8 @@ abstract class ModelBase{
         $objPdo=ConnexionClasse::getCnx();
         $requestStatement=$objPdo->prepare($request);
         $requestStatement->execute();
-        $resultDataFETCH[] = $requestStatement->fetch(PDO::FETCH_NUM);
+        $resultDataFETCH[] = $requestStatement->fetchAll(PDO::FETCH_NUM);
+        $dataReadArray=[];
         foreach($resultDataFETCH as $key=>$value){
             $dataReadArray[$key]=$value;
         }
@@ -272,7 +293,8 @@ abstract class ModelBase{
         $objPdo=ConnexionClasse::getCnx();
         $requestStatement=$objPdo->prepare($request);
         $requestStatement->execute();
-        $resultDataFETCH[] = $requestStatement->fetch(PDO::FETCH_BOTH);
+        $dataReadArray=[];
+        $resultDataFETCH[] = $requestStatement->fetchAll(PDO::FETCH_BOTH);
         foreach($resultDataFETCH as $key=>$value){
             $dataReadArray[$key]=$value;
         }
@@ -308,7 +330,8 @@ abstract class ModelBase{
         $objPdo=ConnexionClasse::getCnx();
         $requestStatement=$objPdo->prepare($request);
         $requestStatement->execute();
-        $resultDataFETCH[] = $requestStatement->fetch(PDO::FETCH_ASSOC);
+        $dataReadArray=[];
+        $resultDataFETCH[] = $requestStatement->fetchAll(PDO::FETCH_ASSOC);
         foreach($resultDataFETCH as $key=>$value){
             $dataReadArray[$key]=$value;
         }
@@ -320,34 +343,40 @@ abstract class ModelBase{
 
 }
 
-class RealModel extends ModelBase{ 
+class ProduitModel extends ModelBase{ 
 
-    private $modelProperties;
 
     function  __construct(String $tableName,String $primaryKey,Array $PropertiesArray){
         $this->nomTable=$tableName;
         $this->primaryKeyName=$primaryKey;
         $this->modelProperties=$PropertiesArray;
-        foreach(array_flip($PropertiesArray) as $key => $value){
-            $this->{$key} = $value;
-          }
-        parent::__construct($this->nomTable,$this->primaryKeyName);
+        
+        
+        parent::__construct($this->nomTable,$this->primaryKeyName,$this->modelProperties);
         
     }
 
+
+    public function getNomProduit():string{
+        //return  $this->modelProperties;
+        return $this->modelProperties['nomproduit'];
+
+    }
+
+    public function getQtePdt():string{
+        //return  $this->modelProperties;
+        return $this->modelProperties['qtepdt'];
+
+    }
+
+    /* on retire les méthodes magique source de bug à cause du typage php. Privilégier les constructions avec les tableaux.
     public function __set($property,$value){
         return $this->modelProperties[$property] = $value;
     } 
 
     public function __get($property){
-        /*if(array_key_exists($property,$this->modelProperties))
-        {
-            return $this->modelProperties[$property];
-        } 
-        else {
-           return null;
-        }*/
+
         return array_key_exists($property,$this->modelProperties) ? $this->modelProperties[$property] : null;
-    }
+    }*/
 
   }
