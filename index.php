@@ -34,20 +34,21 @@ class PseudoController{
         $pdt = new ProduitModel('t_produit','id',$array); 
         
         //partie de test
-        $arrCol=$pdt->getColumn(); 
+        /*$arrCol=$pdt->getColumn(); 
         $arrVal=['getget','8'];
         $arrIndx=['6','1'];
-        $monwhere="`".$pdt->getQtePdt()."`";
-        $request=$pdt->FullUpdateRequest($arrIndx,$arrCol,$arrVal);
+        $monwhere="`".$pdt->getQtePdt()."`";*/ 
+        
+        $request=$pdt->getSelectFromTable();
         
         //verifier la requête en cours
         //return $request; 
 
         //tester l'execution de la requête
-        return $pdt->prepareThenExecute($request);
+        //return $pdt->prepareThenExecute($request);
         
         //lecture
-        //return $pdt->prepareThenReadDataAssocNum($request);
+        return $pdt->prepareThenReadData($request,"num");
 
     }
     
