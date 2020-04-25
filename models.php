@@ -270,7 +270,7 @@ abstract class ModelBase{
     /*
     * @param String $request la requete qu'on veut préparer puis executer
     * @return Array résultat sous forme de tableau  indexé numérique démarrant à 0.
-    */
+    
     public function prepareThenReadDataAssocNum(string $request):?Array{
         $objPdo=ConnexionClasse::getCnx();
         $requestStatement=$objPdo->prepare($request);
@@ -283,12 +283,12 @@ abstract class ModelBase{
         return $dataReadArray;
 
 
-    }
+    }*/
 
     /*
     * @param String $request la requete qu'on veut préparer puis executer
     * @return Array résultat sous forme de tableau avec de sindex numérique et aussi clé en tant qu'index(associatif)
-    */
+    
     public function prepareThenReadDataAssocAll(string $request):?Array{
         $objPdo=ConnexionClasse::getCnx();
         $requestStatement=$objPdo->prepare($request);
@@ -301,7 +301,7 @@ abstract class ModelBase{
         return $dataReadArray;
 
 
-    }
+    }*/
 
     /*
     * @param String $request la requete qu'on veut préparer puis executer
@@ -324,14 +324,19 @@ abstract class ModelBase{
     }
     /*
     * @param String $request la requete qu'on veut préparer puis executer
+    * @optionalParam String $fetchingMode le mode de lecture qu'on souhaite pour le tableau par défaut : both
+    * autre valeur possible : num ou assoc
     * @return Array résultat sous forme de tableau associatif.
     */
-    public function prepareThenReadDataAssoc(string $request):?Array{
+    public function prepareThenReadData(string $request,string $fetchingMode="both"):?Array{
         $objPdo=ConnexionClasse::getCnx();
         $requestStatement=$objPdo->prepare($request);
         $requestStatement->execute();
         $dataReadArray=[];
-        $resultDataFETCH[] = $requestStatement->fetchAll(PDO::FETCH_ASSOC);
+        if($fetchingMode==="num")$resultDataFETCH[] = $requestStatement->fetchAll(PDO::FETCH_NUM);
+        elseif($fetchingMode==="assoc")$resultDataFETCH[] = $requestStatement->fetchAll(PDO::FETCH_ASSOC);
+        else $resultDataFETCH[] = $requestStatement->fetchAll(PDO::FETCH_BOTH);
+        
         foreach($resultDataFETCH as $key=>$value){
             $dataReadArray[$key]=$value;
         }
