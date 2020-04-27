@@ -48,6 +48,21 @@ abstract class ModelBase{
 
         array_unshift($this->modelProperties,$this->primaryKeyName);
         return $this->modelProperties;
+    } 
+
+    /*
+    * @param $id id de l'enregistrement attendu
+    * @return un tableau avec un fetch both donc on accèe aux clé via leur nom ou des index numériques.
+    */
+    public function getEnregistrement($id):array{
+        if(isset($id)){
+            $request="SELECT * FROM `$this->nomTable` WHERE `$this->primaryKeyName`= '$id' ";
+            $objPdo=ConnexionClasse::getCnx();
+            $requestStatement=$objPdo->prepare($request);
+            $requestStatement->execute();
+            return $EnregArr=$requestStatement->fetch();
+        }
+        
     }
 
 
@@ -355,20 +370,19 @@ class ProduitModel extends ModelBase{
         $this->nomTable=$tableName;
         $this->primaryKeyName=$primaryKey;
         $this->modelProperties=$PropertiesArray;
-        
-        
+                
         parent::__construct($this->nomTable,$this->primaryKeyName,$this->modelProperties);
         
     }
 
 
-    public function getNomProduit():string{
+    public function getNomProduitColonne():string{
         //return  $this->modelProperties;
         return $this->modelProperties['nomproduit'];
 
     }
 
-    public function getQtePdt():string{
+    public function getQtePdtColonne():string{
         //return  $this->modelProperties;
         return $this->modelProperties['qtepdt'];
 
