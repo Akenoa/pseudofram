@@ -1,7 +1,11 @@
 <?php
-ini_set('display_errors', 1);
+//ini_set('display_errors', 1);
 require_once('conf_cnx.php');
+require_once('mustache.php-2.13.0\src\Mustache\Autoloader.php');
 require('models.php');
+Mustache_Autoloader::register();
+
+
 
 
 
@@ -17,6 +21,7 @@ require('models.php');
 /*****************************PARTIE CONTROLLER*************************************** */ 
 /*****************************PARTIE CONTROLLER*************************************** */ 
 class PseudoController{ 
+    
 
     public static function indexController(){
         /*$obj=ConnexionClasse::CreerPDO();
@@ -39,7 +44,14 @@ class PseudoController{
         $arrIndx=['6','1'];
         $monwhere="`".$pdt->getQtePdt()."`";*/ 
         
-        $request=$pdt->getSelectFromTable();
+        // $request=$pdt->getSelectFromTable();
+        //return $request;
+        //$tableauRes=$pdt->prepareThenReadData($request,"num");
+        
+        //test recup un enregistrement particulier
+        $var = $pdt->getEnregistrement(3);
+        //return $var;
+         
         
         //verifier la requête en cours
         //return $request; 
@@ -48,10 +60,15 @@ class PseudoController{
         //return $pdt->prepareThenExecute($request);
         
         //lecture
-        return $pdt->prepareThenReadData($request,"num");
+        //return $pdt->prepareThenReadData($request,"num");
+
+        // test moteur template mustache
+        $m = new Mustache_Engine;
+        //$chaine="gloubiboulga";
+        //return $tableauRes[1];
+        return $m->render('Hello {{#tableauRes }} {{ tableauRes.nomproduit }} {{/tableauRes}} !', array('tableauRes' => $var));
 
     }
-    
 
 
 
