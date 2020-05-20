@@ -1,0 +1,14 @@
+{% extends "base.html.twig" %}
+{% block body %}
+<p>Êtes vous sûr de vouloir supprimer l'item suivant ?</p>
+<form  method="post">
+<ul>
+    {%for p in pdt %}
+        <li>{{p}}</li>
+    {% endfor %}
+<ul>
+<input type="submit" class="button is-danger"></input>
+</form>
+<hr />
+<a href="../../index" class="button is-link is-light">Index</a>
+{% endblock %}

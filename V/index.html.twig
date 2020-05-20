@@ -1,0 +1,32 @@
+{% extends "base.html.twig" %}
+{% block body %}
+  <div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Id : </th>
+          <th>Nom : </th>
+          <th>Quantité : </th>
+          <th>Détail : </th>
+          <th>Modifier : </th>
+          <th>Supprimer : </th>  
+        </tr>
+      </thead>
+      <tbody>
+      {% for datas in dataArray %}
+        {% for data in datas %}
+        <tr> 
+          <td> {{data['id'] }} </td>
+          <td> {{data['nomproduit'] }} </td>
+          <td> {{data['qtepdt'] }} </td>
+           <td><a href="./produit/{{data['id']}}" class="button is-info is-light">Détail</a></td>
+          <td><a href="./produit/updt/{{data['id']}}" class="button is-warning is-light">Modifier</a></td>
+          <td><a href="./produit/dlt/{{data['id']}}" class="button is-danger is-light">Supprimer</a></td>
+        {% endfor %}    
+      </tr>
+      <td><a href="./addPdt" class="button is-primary">Ajouter</a></td>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endblock %}

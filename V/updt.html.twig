@@ -1,0 +1,20 @@
+{% extends "base.html.twig" %}
+{% block body %}
+<form method="post">
+<div class="field">
+  <label class="label">Nom produit</label>
+  <div class="control">
+    <input class="input" name="nomproduit" type="text" value="{{pdt[1]}}">
+  </div>
+</div>
+<div class="field">
+  <label class="label">Quantité</label>
+  <div class="control">
+    <input class="input" name="qtepdt" type="text" value="{{pdt[2]}}">
+  </div>
+</div>
+<input type="submit" class="button is-primary">Enregistrer</input>
+</form>
+<hr />
+<a href="../../index" class="button is-link is-light">Index</a>
+{% endblock %}

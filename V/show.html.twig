@@ -1,0 +1,8 @@
+{% extends "base.html.twig" %}
+{% block body %}
+{% for prod in pdt %}
+  {{ prod }}<br />
+{% endfor %}
+<hr />
+<a href="./../index" class="button is-link is-light">Index</a>
+{% endblock %}
