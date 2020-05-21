@@ -1,16 +1,26 @@
-25/04/2020 (le document est en évolution car des modifications vont survenir au fur et à mesure de la création du FrameWork il permet de faire le point sur ce qu'il se passe.)
+20/05/2020 : le framework est fonctionnel, mais il est toujours améliorable, n"anmoins considéré comme terminé ! 
 
-Avancement sur le FrameWork
+**Architecture du projet :** 
 
-fichier conf_cnx.php
+- M : dossier modèle qui contient les fichiers de configuration de connexion et la classe qui permet de réaliser les connexions. 
+- C : dossier qui contient le fichier pseudocontroller qui contient les classes mastercontroller et pseudocontroller (controller d'exemple pour l'application) 
+  V : dossier contient toutes les vues (fihcier en .html.twig)  
+- R: dossier qui contient les fichier nécessaire au routage : la classe route,la classe router et la classe routerexception. 
+- Le dossier vendor contient les dépendance nécessaire au fonctionnement de l'application.  
+- le fichier htaccess sert à rediriger vers index.php qui contient toutes les routes de l'application (c'est dans ce fichier qu'il faut les définir)
+- le fichier twigloader sert à charger l'environnement pour que le moteur de template twig fonctionne.
 
-Classe Config
+**DOSSIER M**
+
+fichier : conf_cnx.php
+
+**Classe Config**
 
 Contient des variables constantes pour se connecter à une base de donnée (le nom de la base de donnée, l'hôte,l'utilisateur et le mot de passe.). 
 
-Interrogation: mettre ces constantes sous forme de tableau?
 
-Classe ConnexionClasse
+
+**Classe ConnexionClasse**
 
 Une seule fonction static qui permet de renvoyer une instance PDO pour faire la connexion. Un attribut privé static $dsn qui contient la chaîne complète (datasourcename) :
 
@@ -18,199 +28,118 @@ mysql:dbname=MaBaseDeDonne;host=MonHote. Si la connexion réussi une instance de
 
 
 
-fichier index.php
+fichier models.php (contient la partie ORM générique + un exemple de modèle concret pour le fonctionnement du framework.) 
+
+
+
+La classe ModelBase contient le nécessaire à la réalisation des requêtes (lecture,insertion,modification et suppression), l'ensemble de l'ORM a été pensé pour fonctionner avec des tableaux notamment pour les formulaires qui utilisent les super variables $_POST et $_GET pour pouvoir récupérer les valeurs plus facilement via des formulaires.  Tous les modèles à créer doivent alors hérités de la classe ModelBase!
+
+ModelBase à 3 propriétés protégées : le nom de la table,le nom de la clé primaire et un tableau contenant la liste des autres noms de colonne. (obligatoirement un tableau même si une seule colonne, un modèle à forcément une autre colonne en plus de l'id/clé primaire notamment pour les clé primaire qui serait des codes et dont le nom des codes ne seraient pas explicites !)
+En plus des fonctions de CRUD basique et de récupération d'enregistrement, on retrouve évidement des getter et setter sur les propriétés (dont un qui nous permet de récupérer le nom des colonnes sous forme de tableau et un qui permet de récupérer la clé primaire et le nom des colonnes sous forme de tableau.)
+
+
+
+ModelConcret(ProduitModel ici)
+
+Hérite de modèle base, son constructeur passe les paramètre nécessaire à son parent. 
+
+
+
+Exemple de création d'un getter : il faut les créer manuellement ,pendant un temps l'idée d'utilisation de méthode magique a été utilisé mais elles devient vite source de bug (notamment à cause de typages trop souple de php) donc a été abandonnée!
+
+```php
+public function getNomProduitColonne():string{
+        return $this->modelProperties['nomproduit'];
+
+    }
+```
+
+
+
+
+
+**FICHIER OUT DOSSIER**
+
+**fichier index.php**
+
+contient toutes les routes pour l'applications et charge les éléments nécessaire au fonctionnement de celle-ci, le fichier se charge de lancer le routage du système via l'appel de la fonction run();
 
 require_once le fichier de conf_cnx.php, j'utilise require car la page en a vraiment BESOIN et pas simplement include car le script ne peut pas fonctionner sans la partie de connexion. Un require pour le fichier models.php car il est nécessaire pour créer nos models et requête dessus. 
 
-Classe PseudoController
+**.htaccess** : fait la redirection automatique vers index.php 
 
-Ne sert qu'à réaliser des test pour le moment. Les fonctions de cette classes sont statics et ne nécessite pas d'instance de l'objet PseudoController. 
+**twigloader.php** : charge environnement nécessaire au fonctionnement du moteur de template twig.  
 
-Le fichier contient pour le moment la partie vue avec un peu de html histoire d'avoir de la mise en forme minimale pendant les tests. Il y a une balise PHP ouverte dans ce code html juste pour faire les test voir si les appels fonctionne bien entre la vue et le PseudoController. Il faudra déterminer par la suite si c'est possible de simplement envoyer le résultat dans une vue comme dans les framework plus classiques mais ça viendra dans un second temps.
 
 
+**DOSSIER V** : ne contient que les vues en html.twig.
 
-fichier test.php
+**DOSSIER R** 
 
-Pas grand chose à dire, il sert à simplement à tester une fonction de PHP, des expériences sur les tableaux quand je ne suis pas sûre du résultat en lisant la documentation. C'est un peu un fichier témoin pour le moment. 
+**RouterException.php** : extends la classe native de php Exception juste pour pouvoir retourner un message plus explicite en cas de débugage (plus claire de savoir si le problème vient du routage ou du code PHP en général.) 
 
+**Route.php** 
 
+3 attributs privés : $path : le chemin de la route, $callable : la closure en lien avec cette route, et $matches=[]; (un tableau qui contient tout les résultats possibles qui peuvent matcher cette route). 
 
-fichier models.php
+la fonction match sert à voir si l'url sur laquelle on se retrouve match une de nos routes. 
 
-Classe abstract ModelBase
+call sert à appeler la closure, càd la fonction qui s'execute en lien avec la route  
 
-3 attributs protégés: le nom de la table et la clé primaires et un tableau contenant le nom des colonnes
 
-La classe dispose d'un constructeur qui sert à donner des valeurs aux 3 attributs protégés via la création d'une classe fille. Chaque modèle dispose au minimum d'un nom et d'une clé primaire et d'une colonne (fourni sous forme de tableau), le tableau est fourni sous la forme suivante 
 
-$tableauColonne['nomcolonne']=>'nomcolonne'
+Exemple de route : 
 
-La classe contient le nécessaire pour réaliser des requêtes et récupérer les résultats (notamment dans le cadre d'un SELECT.)
 
-Confirmation: on ne peut pas accèder aux méthodes protégés en dehors de la classe fille même sur un objet enfant, surtout si comme dans mon cas on se situe dans une autre classe(PseudoController en l'occurence)
 
-pour la lecture on a
+```php
+$router->get('/addPdt',function(){ PseudoController::VueInsert(); });
+$router->post('/addPdt',function(){ PseudoController::GoInsert(); });
 
-méthode getSelectFromTable permet de créer une requête SELECT complète selon les choix de l'utilisateurs. 
+$router->get('/produit/updt/:id',function($id){ PseudoController::VueUpdate($id); });
+$router->post('/produit/updt/:id',function($id){ PseudoController::GoUpdate($id); });
+```
 
-    public function getSelectFromTable($FieldToSelect=null,$whereClause=null,$orderByClause=null,$limitClause=null):string
-    
 
-Elle peut recevoir jusqu'à 4 paramètres, mais ils sont optionnels si aucun n'est renseigné on fait un SELECT * de la table. On peut aussi moduler passé un premier paramètre NULL et remplir la clause WHERE pour faire une recherche. On retourne la requête complète sous forme de chaîne à la fin.
 
-- public function prepareThenReadData(string request, string  fetchingMode="both"):?array
-  si aucune valeur n'est renseigné pour $fetchingMode on fait un fetch_both sinon on peut précisier num ou assoc pour obtenir soit un tableau indexé numérique ou un tableau associatif avec le nom des colonnes.
+**Router.php**
 
+2 propriétés privées : url qui va correspondre à l'url courant et routes=[] qui va contenir toutes les instances de la classe route du framework. 
 
+Un routeur s'instancie de la façon suivante : 
 
+```php
+$router= new Router($_GET['url']);
+//une fois les routes créer comme vu précédemment on peut lancer le router de cette fçaon :
+$router->run();
+```
 
+2 méthodes : post et get qui servent à savoir par quoi les données passe et permettent de faire un premier tri, ce qui évitera par la suite d'avoir à trier toutes les routes, on triera seulement celle dont on a besoin (selon si c'est un get ou un post). 
 
-Pour éviter de trop surchargé les fonctions j'ai découpé la création de requête : 
+Le tableau routes se conçoit de la façon suivant : 
 
-pour les insertions on a : 
+```php
+$route=newRoute($path,$callable)
+$this->routes['GET'][]=$route ;
+//ou on retrouve aussi l'alternative suivante : 
+$this->routes['POST'][]=$route ;
+```
 
-- getFirstInsertPartRequest():string // retourne une chaîne qui contient 
 
-    INSERT INTO `nomTable`
 
+**DOSSIER C** 
 
+**fichier pseudocontroller.php** 
 
-- getSecondInsertPartRequest(array TableauChamps, array TableauValeur) qui retourne la suite de la requête. La fonction attend comme paramètre la liste des champs dans les quels on souhaite faire une insertion et les valeurs qu'on veut associé à ces champs (à mettre dans le même ordre.)
+charge les modèles.
 
-(champ1,champs2) VALUES ('valeur1','valeur2')
+**Classe MasterController** permet de charger l'endroit ou seront repertoriés les vue et contient aussi le renvoie vers la vue "Accueil de Framework". 
 
 
 
-- FullInsertRequest(array ArrayField,array ArrayValue):string 
+**Classe PseudoCondroller** (exemple de controller concret ) HERITE DE MASTERCONTROLLER :
 
-Attends les même paramètre que getSecondInsertPartRequest() qui permet de les transmettre à cette dernière. Cette fonction appel getFirstInsertPartRequest() puis getSecondInsertPartRequest() et constitue la requête finale d'insertion qui est alors retournée. 
+créer une instance de la classe produit dans une méthode fiveProduitInstance(); qui permettre d'utiliser un objet de type produit pour réaliser nos requêtes (un peu comme les framework classique)
 
+Toutes les autres méthodes sont des méthodes de CRUD classiques et renvoie vers les vues correspondantes. Les fonctions ont été imaginé et crée sur l'idée de resource de Laravel (une méthode qui correspond à une route en get qui envoie vers le formulaire et la même en post pour réaliser l'action)
 
-
-pour les suppressions on a :
-
-- public function getFirstDeletePartRequest():string
-
-retourne DELETE FROM nomtable
-
-- public function getSecondDeletePartRequest($IndexToDelete=null):string 
-
- La clé primaire est automatiquement récupéré dans cette fonction.
-
-Paramètre optionnel des IDs ou l'on souhaite faire une suppression, si rien n'est passé une chaîne vide est retourné. On aura donc un DELETE FROM nomtable et ça va purger la table. Si le tableau d'index est fourni on obtient une requête de la forme : DELETE FROM nomTable WHERE cléPrimaire='VAL1' OR cléPrimaire='VAL2'. (le OR ne se créer que s'il y a plusieurs index dans le tableau fourni en paramètre.)
-
-- public function FullDeleteRequest($IndexToDelete=null):string
-
-Paramètre optionnel des IDs ou l'on souhaite faire une suppression pour la fonction getSecondDeletePartRequest, si rien n'est passé une chaîne vide est retourné. On aura donc un DELETE FROM nomtable et ça va purger la table. La requête complète de suppresion est réalisé.
-
-
-
-pour les modification on a :  
-
-- getFirstUpdatePartRequest():string;
-  Réalise la première partie de la requête et la retourne UPDATE nomTable SET
-- getSecondUpdatePartRequest(array FieldToUpdate,array newSetableValue):string; 
-  Attends les champs à updater dans un premier et temps et les valeurs de ceux ci (à mettre dans le même ordre comme pour insertion). et réalise la partie champ='NouvelleValeur' de la requête et la retourne.
-
-- getThirdUpdateRequest(array $IndexToUpdate):string;
-  Réalise la partie WHERE on update sur un enregistrement ou la clé primaire = une valeur ou plusieurs (si une seule valeur dans le tableau alors pas de OR)
-- FullUpdateRequest(array IndexToUpdate,array FieldToUpdate, array $newSetableValue):string
-  Rassemble toutes les précédentes partie de la requête pour un update et la retourne au complet, attends les même paramètre que les sous méthodes appelées pour pouvoir les transmettre. 
-
-réflexion sur les paramètres nécessaire à l'insertion et la modification : 
-
-le but est que l'utilisateur puisse modifier ce qu'il souhaite ou passer directement toutes les colonnes via la méthode getColumn par exemple. Penser à créer des fonctions de construction de tableau pourrait être une idée mais il faudrait de toute façon penser à l'autre dans le quel mettre les valeurs pour les clés...
-
-réflexion sur la modification :
-
-on va tester sur le multi request d'abords sur MysqlServer en SQL avec des requêtes conditionnelles et ensuite on l'implémentera en PHP. 
-
-Multirequest basique C'est basique c'est de nouvelle valeur à des colonnes sur plusieurs ids. framework on plutôt tendances à fonctionner comme ça... : ce qui est déjà mis en place
-
- Index=[
-
-1=>['nom'=>'Doe',
-
-         'age'=>30 ]
-
-2=>['nom'=>'Doe',
-
-         'age'=>30 ]
-
-3=>['nom'=>'Doe',
-
-         'age'=>30 ]
-
-] 
-
-On peut aussi penser à:
-
-Tableau=[
-
-'champ'=>['val1','val2','val3'],
-
-'champ2'=>['val1','val2','val3'] 
-
-]
-
-Sinon 1 req : 
-
-Tableau=['field'=>'value',
-
-'field2'=>'value2']
-
-Obliger à la construction de tableau avant de faire la requête.
-
-reflexion sur update: le multi request avancé sur update avec plusieurs champs/valeurs diff === compliqué pas l'impression que les orm classique le traite. [1,2,3] 
-
-Tableau=[
-
-1=>[
-
- 'nom'=>'jean'
-
-]
-
-2=>[
-
- 'age'=>20,'
-
-ville'=>'Rouen'
-
-] ,
-
-3=>[
-
-'prenom'=>'Jane', 
-
-'nom'=>'Doe'
-
-]
-
-pour les fonctions insert update delete: 
-
-- public function prepareThenExecute(string $request) 
-
-Se connecte à la base,prépare la requête passée en paramètre et si elle échoue un message d'erreur survient sinon renvoie un boléen à vrai..
-
-
-
-
-
-Classe ProduitModel
-
-1 attribut privé les colonnes de la table. 
-
-Constructeur attends un nom de table, une clé primaire et un tableau contenant le nom des colonnes même s'il y a une seule colonne. Utilise le constructeur du parent pour donner des valeurs aux attributs protégées de la classe mère ModelBase.  
-
-
-
-Contient fonctions :
-
-NB: ces fonctions pourrait être dans la classe mère notamment les 2 premières. a étudier pour le moment le doc est réalisé en fonction du code déjà écrit.
-
-- getTable qui retourne une chaîne contenant le nom de la table.
-- getPrimaryKeyName qui retourne une chaîne contenant le nom de la clé primaire de la table.
-- getColumn qui retourne sous forme de tableau les colonnes pour cette table.
-- getColumnAndPk retourne un tableau avec en première clé : la clé primaire de la table et les autres clés contiennent les colonnes de la table.
