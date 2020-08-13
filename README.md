@@ -1,4 +1,4 @@
-20/05/2020 : le framework est fonctionnel, mais il est toujours améliorable, n"anmoins considéré comme terminé ! 
+20/05/2020 : le framework est fonctionnel, mais il est toujours améliorable, néanmoins considéré comme terminé (je suis allée au bout de ce que je souhaitais faire et me cocnentre sur d'autre projets actuellement) ! 
 
 **Architecture du projet :** 
 
